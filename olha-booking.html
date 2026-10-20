@@ -1,0 +1,292 @@
+<title>Ольха Онлайн-запись</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tenor+Sans&family=Manrope:wght@400;500;700&display=swap">
+<style>
+/* Layout: одностраничник салона со встроенным виджетом записи (услуга → мастер → день → время → контакты → подтверждение) и панелью администратора, видимой только владельцу. Одна светлая тема намеренно. */
+:root{
+  --paper:#F3F5F0; --card:#FFFFFF; --ink:#1E2722; --soft:#5C6A61; --line:#DCE3D9;
+  --leaf:#4F7350; --leaf-deep:#2F4A33; --leaf-soft:#E4ECE1; --plum:#7E4A72; --plum-soft:#F1E7EE; --bad:#A63D3D;
+  --f-display:"Tenor Sans","Manrope",Georgia,serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.55}
+.demo{background:var(--leaf-deep);color:#E8EFE6;font-size:12px;text-align:center;padding-block:6px}
+.demo a{color:#fff;font-weight:700}
+.wrap{max-width:960px;margin:0 auto;padding-inline:16px}
+header.top{display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:16px}
+.logo{font-family:var(--f-display);font-size:22px;letter-spacing:.06em;display:flex;align-items:center;gap:8px}
+.logo svg{width:26px;height:26px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;background:var(--plum);color:#fff;text-decoration:none;font:inherit;font-weight:700;border:0;border-radius:999px;padding:14px 24px;font-size:16px;cursor:pointer}
+.btn:hover{background:#6B3D60}
+.btn:disabled{background:#C9BEC6;cursor:not-allowed}
+.btn.ghost{background:transparent;color:var(--ink);border:1px solid var(--line)}
+:focus-visible{outline:3px solid var(--leaf);outline-offset:2px}
+
+.hero{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;align-items:center;padding-block:20px 40px}
+@media (max-width:760px){.hero{grid-template-columns:1fr;gap:20px}}
+.eyebrow{font-size:12px;text-transform:uppercase;letter-spacing:.14em;color:var(--leaf);margin:0 0 12px;font-weight:700}
+h1{font-family:var(--f-display);font-weight:400;font-size:clamp(32px,6vw,52px);line-height:1.08;margin:0 0 14px;text-wrap:balance}
+.lead{color:var(--soft);margin:0 0 22px;max-width:34em}
+.next{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;display:flex;flex-direction:column;gap:6px}
+.next .l{font-size:13px;color:var(--soft);display:flex;align-items:center;gap:8px}
+.next .l::before{content:"";width:8px;height:8px;border-radius:50%;background:#3E9A55}
+.next b{font-family:var(--f-display);font-weight:400;font-size:24px}
+.next span{font-size:14px;color:var(--soft)}
+
+section{padding-block:32px}
+h2{font-family:var(--f-display);font-weight:400;font-size:clamp(26px,4vw,34px);margin:0 0 6px}
+.sub{color:var(--soft);margin:0 0 20px}
+
+/* виджет */
+.widget{background:var(--card);border:1px solid var(--line);border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:22px}
+.step{display:flex;flex-direction:column;gap:10px}
+.step h3{margin:0;font-size:14px;font-weight:700;display:flex;align-items:center;gap:10px}
+.step h3 i{font-style:normal;width:24px;height:24px;border-radius:50%;background:var(--leaf-soft);color:var(--leaf-deep);display:grid;place-items:center;font-size:12px}
+.step.done h3 i{background:var(--leaf);color:#fff}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;font-size:14px;text-align:left;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:12px;padding:10px 14px;cursor:pointer;display:flex;flex-direction:column;gap:1px}
+.opt small{color:var(--soft);font-size:12px}
+.opt[aria-pressed="true"]{background:var(--leaf-deep);border-color:var(--leaf-deep);color:#fff}
+.opt[aria-pressed="true"] small{color:#CFE0CC}
+.days{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px}
+.day{flex:none;min-width:64px;align-items:center;text-align:center}
+.times{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:8px}
+.time{align-items:center;font-variant-numeric:tabular-nums}
+.time:disabled{opacity:.35;text-decoration:line-through;cursor:not-allowed}
+.empty{font-size:14px;color:var(--soft);margin:0}
+.form{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media (max-width:560px){.form{grid-template-columns:1fr}}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--soft)}
+input{font:inherit;font-size:16px;color:var(--ink);background:var(--paper);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%;min-width:0}
+.summary{background:var(--plum-soft);border-radius:14px;padding:14px;font-size:14px;display:flex;flex-direction:column;gap:2px}
+.summary b{font-size:16px}
+.err{color:var(--bad);font-size:14px;margin:0;min-height:1em}
+.ok{background:var(--leaf-soft);border-radius:18px;padding:22px;display:flex;flex-direction:column;gap:8px}
+.ok h3{font-family:var(--f-display);font-weight:400;font-size:24px;margin:0}
+.ok p{margin:0;color:var(--soft)}
+
+.price{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:4px 18px}
+.row{display:grid;grid-template-columns:1fr auto;gap:2px 16px;padding-block:12px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row .p{grid-row:1/3;grid-column:2;align-self:center;font-weight:700;white-space:nowrap;font-variant-numeric:tabular-nums}
+.row .t{font-size:13px;color:var(--soft)}
+
+/* админка */
+.admin{background:var(--ink);color:#E6ECE7;border-radius:22px;padding:20px;display:flex;flex-direction:column;gap:12px}
+.admin h2{color:#fff}
+.admin .sub{color:#A9B7AD;margin:0}
+.bk{display:grid;grid-template-columns:auto 1fr auto;gap:12px;align-items:center;background:#2A352F;border-radius:12px;padding:12px}
+.bk .when{font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.bk .who{min-width:0;overflow-wrap:anywhere;font-size:14px}
+.bk .who small{display:block;color:#A9B7AD}
+.bk button{font:inherit;font-size:13px;background:transparent;color:#F0B9B9;border:1px solid #5A4040;border-radius:8px;padding:6px 10px;cursor:pointer}
+.admin .none{color:#A9B7AD;font-size:14px;margin:0}
+
+footer{padding-block:32px 40px;font-size:14px;color:var(--soft);display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--line);margin-top:24px}
+footer b{color:var(--ink)}
+</style>
+
+<div class="demo">Это демо-сайт с онлайн-записью. Такой же можно сделать для вашего салона — <a href="https://t.me/dmitry_mikhaylov2001" target="_blank" rel="noopener">написать Дмитрию</a></div>
+
+<div class="wrap">
+  <header class="top">
+    <div class="logo">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 3c7 5 9 12 6 19-2 4-4 6-6 7-2-1-4-3-6-7-3-7-1-14 6-19z" fill="#4F7350"/><path d="M16 7v22" stroke="#F3F5F0" stroke-width="1.6" fill="none"/></svg>
+      ОЛЬХА
+    </div>
+    <a class="btn ghost" href="#book">Записаться</a>
+  </header>
+
+  <div class="hero">
+    <div>
+      <p class="eyebrow">Студия красоты · Йошкар-Ола</p>
+      <h1>Запишитесь прямо здесь, за минуту</h1>
+      <p class="lead">Выберите услугу, мастера и свободное время. Без звонков, без переписки, без ожидания ответа администратора.</p>
+      <a class="btn" href="#book">Выбрать время</a>
+    </div>
+    <div class="next" aria-live="polite">
+      <span class="l">Ближайшее свободное окно</span>
+      <b id="nextTime">ищем…</b>
+      <span id="nextWho"></span>
+    </div>
+  </div>
+
+  <section id="book">
+    <h2>Онлайн-запись</h2>
+    <p class="sub">Занятое время зачёркнуто, выбрать можно только свободное.</p>
+    <div class="widget" id="widget">
+      <div class="step" id="s1"><h3><i>1</i>Услуга</h3><div class="opts" id="svcBox"></div></div>
+      <div class="step" id="s2"><h3><i>2</i>Мастер</h3><div class="opts" id="mBox"></div></div>
+      <div class="step" id="s3"><h3><i>3</i>День</h3><div class="days" id="dayBox"></div></div>
+      <div class="step" id="s4"><h3><i>4</i>Время</h3><div class="times" id="timeBox"></div></div>
+      <div class="step" id="s5"><h3><i>5</i>Ваши контакты</h3>
+        <div class="form">
+          <label for="fName">Имя<input id="fName" autocomplete="given-name" placeholder="Анастасия"></label>
+          <label for="fPhone">Телефон<input id="fPhone" type="tel" autocomplete="tel" inputmode="tel" placeholder="+7 900 000-00-00"></label>
+        </div>
+        <div class="summary" id="summary"></div>
+        <p class="err" id="err" role="alert"></p>
+        <button class="btn" id="submit" type="button" disabled>Записаться</button>
+      </div>
+    </div>
+    <div class="ok" id="done" hidden>
+      <h3>Вы записаны</h3>
+      <p id="doneTxt"></p>
+      <p>Накануне придёт напоминание. Если планы изменятся, напишите нам, и мы перенесём запись.</p>
+      <div><button class="btn ghost" id="again" type="button">Записаться ещё</button></div>
+    </div>
+  </section>
+
+  <section id="prices">
+    <h2>Цены</h2>
+    <p class="sub">Окончательные, без доплат.</p>
+    <div class="price" id="priceBox"></div>
+  </section>
+
+  <section id="adminSec" hidden>
+    <div class="admin">
+      <h2>Панель администратора</h2>
+      <p class="sub">Этот блок видите только вы. Здесь появляются все записи с сайта, их можно отменить.</p>
+      <div id="bkList"></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>Студия красоты «Ольха» — вымышленный салон для демонстрации.</span>
+    <span>Сайт с онлайн-записью: <b>Дмитрий</b> · Telegram <b>@dmitry_mikhaylov2001</b> · <b>+7 (999) 609-46-96</b></span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var SERVICES=[
+    {id:'mani',name:'Маникюр с покрытием',cat:'nails',dur:'1,5 ч',price:1500},
+    {id:'pedi',name:'Педикюр с покрытием',cat:'nails',dur:'2 ч',price:2000},
+    {id:'cut',name:'Женская стрижка',cat:'hair',dur:'1 ч',price:1200},
+    {id:'color',name:'Окрашивание',cat:'hair',dur:'2 ч',price:3000},
+    {id:'brow',name:'Брови: коррекция и окрашивание',cat:'brows',dur:'40 мин',price:800},
+    {id:'lash',name:'Ламинирование ресниц',cat:'brows',dur:'1 ч',price:1700}
+  ];
+  var MASTERS=[
+    {id:'anna',name:'Анна',cat:'nails',note:'6 лет опыта'},
+    {id:'olga',name:'Ольга',cat:'nails',note:'3 года опыта'},
+    {id:'maria',name:'Мария',cat:'hair',note:'9 лет опыта'},
+    {id:'ekaterina',name:'Екатерина',cat:'brows',note:'4 года опыта'}
+  ];
+  var HOURS=['10:00','11:00','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+  var WD=['вс','пн','вт','ср','чт','пт','сб'], MON=['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  var $=function(id){return document.getElementById(id)};
+  var state={svc:null,master:null,date:null,time:null};
+  var taken=new Set(); var db=null; var owner=false;
+
+  function pad(n){return String(n).padStart(2,'0')}
+  function iso(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+  var days=[];(function(){var t=new Date();for(var i=0;i<7;i++){var d=new Date(t.getFullYear(),t.getMonth(),t.getDate()+i);days.push(d)}})();
+  function dayLabel(ds,long){var p=ds.split('-');var d=new Date(+p[0],+p[1]-1,+p[2]);var today=iso(new Date());var tm=new Date();tm.setDate(tm.getDate()+1);
+    if(ds===today)return long?'сегодня':'Сегодня'; if(ds===iso(tm))return long?'завтра':'Завтра';
+    return long?(d.getDate()+' '+MON[d.getMonth()]):(WD[d.getDay()]+', '+d.getDate())}
+  // правдоподобная занятость для демо
+  function pseudo(ds,m,t){var s=ds+m+t,h=0;for(var i=0;i<s.length;i++)h=(h*31+s.charCodeAt(i))>>>0;return h%10<4}
+  function past(ds,t){var now=new Date();if(ds!==iso(now))return false;return +t.slice(0,2)<=now.getHours()}
+  function key(ds,m,t){return ds+'_'+m+'_'+t.replace(':','')}
+  function free(ds,m,t){return !past(ds,t)&&!pseudo(ds,m,t)&&!taken.has(key(ds,m,t))}
+  function mastersFor(cat){return MASTERS.filter(function(m){return m.cat===cat})}
+  function freeMaster(ds,t){var svc=SERVICES.find(function(s){return s.id===state.svc});var list=state.master==='any'?mastersFor(svc.cat):[MASTERS.find(function(m){return m.id===state.master})];
+    for(var i=0;i<list.length;i++)if(free(ds,list[i].id,t))return list[i];return null}
+
+  function btn(label,sub,pressed,cls){var b=document.createElement('button');b.type='button';b.className='opt'+(cls?' '+cls:'');b.setAttribute('aria-pressed',pressed?'true':'false');
+    var s=document.createElement('span');s.textContent=label;b.appendChild(s);if(sub){var sm=document.createElement('small');sm.textContent=sub;b.appendChild(sm)}return b}
+
+  function render(){
+    var sb=$('svcBox');sb.textContent='';
+    SERVICES.forEach(function(s){var b=btn(s.name,s.dur+' · '+s.price.toLocaleString('ru-RU')+' ₽',state.svc===s.id);b.onclick=function(){state.svc=s.id;state.master='any';state.time=null;render()};sb.appendChild(b)});
+    $('s1').classList.toggle('done',!!state.svc);
+
+    var mb=$('mBox');mb.textContent='';
+    if(!state.svc){mb.appendChild(note('Сначала выберите услугу'))}
+    else{var svc=SERVICES.find(function(s){return s.id===state.svc});
+      var a=btn('Любой мастер','ближайшее время',state.master==='any');a.onclick=function(){state.master='any';state.time=null;render()};mb.appendChild(a);
+      mastersFor(svc.cat).forEach(function(m){var b=btn(m.name,m.note,state.master===m.id);b.onclick=function(){state.master=m.id;state.time=null;render()};mb.appendChild(b)})}
+    $('s2').classList.toggle('done',!!state.master);
+
+    var db_=$('dayBox');db_.textContent='';
+    if(!state.date)state.date=iso(days[0]);
+    days.forEach(function(d){var ds=iso(d);var b=btn(dayLabel(ds),null,state.date===ds,'day');b.onclick=function(){state.date=ds;state.time=null;render()};db_.appendChild(b)});
+    $('s3').classList.toggle('done',!!state.date&&!!state.master);
+
+    var tb=$('timeBox');tb.textContent='';
+    if(!state.svc){tb.appendChild(note('Выберите услугу, чтобы увидеть свободное время'))}
+    else{var any=false;HOURS.forEach(function(t){var m=freeMaster(state.date,t);var b=btn(t,null,state.time===t,'time');if(!m)b.disabled=true;else any=true;b.onclick=function(){state.time=t;render()};tb.appendChild(b)});
+      if(!any){tb.textContent='';tb.appendChild(note('На этот день свободного времени нет, выберите другой день'))}}
+    $('s4').classList.toggle('done',!!state.time);
+
+    var sum=$('summary');sum.textContent='';
+    if(state.svc&&state.time){var svc2=SERVICES.find(function(s){return s.id===state.svc});var m2=freeMaster(state.date,state.time);
+      var b1=document.createElement('b');b1.textContent=svc2.name+' · '+svc2.price.toLocaleString('ru-RU')+' ₽';
+      var s1=document.createElement('span');s1.textContent=cap(dayLabel(state.date,true))+' в '+state.time+(m2?', мастер '+m2.name:'');
+      sum.append(b1,s1);sum.hidden=false}else{sum.hidden=true}
+    $('submit').disabled=!(state.svc&&state.time);
+    renderNext();
+  }
+  function note(t){var p=document.createElement('p');p.className='empty';p.textContent=t;return p}
+  function cap(s){return s.charAt(0).toUpperCase()+s.slice(1)}
+
+  function renderNext(){
+    for(var i=0;i<days.length;i++){var ds=iso(days[i]);for(var j=0;j<HOURS.length;j++){for(var k=0;k<MASTERS.length;k++){var m=MASTERS[k];if(free(ds,m.id,HOURS[j])){
+      $('nextTime').textContent=cap(dayLabel(ds,true))+', '+HOURS[j];$('nextWho').textContent='Мастер '+m.name+(m.cat==='nails'?', маникюр':m.cat==='hair'?', волосы':', брови и ресницы');return}}}}
+    $('nextTime').textContent='Мест нет на неделю';$('nextWho').textContent='';
+  }
+
+  // цены
+  (function(){var box=$('priceBox');SERVICES.forEach(function(s){var r=document.createElement('div');r.className='row';var n=document.createElement('span');n.textContent=s.name;var p=document.createElement('span');p.className='p';p.textContent=s.price.toLocaleString('ru-RU')+' ₽';var t=document.createElement('span');t.className='t';t.textContent=s.dur;r.append(n,p,t);box.appendChild(r)})})();
+
+  $('submit').onclick=async function(){
+    var name=$('fName').value.trim(), phone=$('fPhone').value.trim(), err=$('err');
+    err.textContent='';
+    if(name.length<2){err.textContent='Укажите имя.';$('fName').focus();return}
+    if(phone.replace(/\D/g,'').length<10){err.textContent='Укажите телефон полностью, например +7 900 000-00-00.';$('fPhone').focus();return}
+    var m=freeMaster(state.date,state.time); if(!m){err.textContent='Это время только что заняли. Выберите другое.';state.time=null;render();return}
+    var svc=SERVICES.find(function(s){return s.id===state.svc});
+    var k=key(state.date,m.id,state.time);
+    var rec={date:state.date,time:state.time,master:m.id,masterName:m.name,service:svc.name,price:svc.price,name:name,phone:phone,created:Date.now(),slot:k};
+    this.disabled=true;
+    try{
+      if(db){await db.doc('slots/'+k).set({date:state.date,time:state.time,master:m.id});await db.doc('bookings/'+k).set(rec)}
+      else{taken.add(k)}
+    }catch(e){taken.add(k)}
+    $('doneTxt').textContent=name+', ждём вас '+dayLabel(state.date,true)+' в '+state.time+'. '+svc.name+', мастер '+m.name+'.';
+    $('widget').hidden=true;$('done').hidden=false;$('done').scrollIntoView({block:'center'});
+  };
+  $('again').onclick=function(){state.time=null;$('fName').value='';$('fPhone').value='';$('done').hidden=true;$('widget').hidden=false;render()};
+
+  function renderAdmin(list){
+    var box=$('bkList');box.textContent='';
+    if(!list.length){box.appendChild(Object.assign(document.createElement('p'),{className:'none',textContent:'Записей пока нет. Запишитесь через виджет выше, и запись появится здесь.'}));return}
+    list.forEach(function(b){
+      var row=document.createElement('div');row.className='bk';
+      var w=document.createElement('span');w.className='when';w.textContent=cap(dayLabel(b.date,true))+' '+b.time;
+      var who=document.createElement('span');who.className='who';who.textContent=b.name+' · '+b.phone;
+      var sm=document.createElement('small');sm.textContent=b.service+', мастер '+b.masterName;who.appendChild(sm);
+      var x=document.createElement('button');x.type='button';x.textContent='Отменить';
+      x.onclick=async function(){if(x.dataset.arm!=='1'){x.dataset.arm='1';x.textContent='Точно?';setTimeout(function(){x.dataset.arm='';x.textContent='Отменить'},3000);return}
+        try{await db.doc('bookings/'+b.slot).delete();await db.doc('slots/'+b.slot).delete()}catch(e){}};
+      row.append(w,who,x);box.appendChild(row);
+    });
+  }
+
+  render();
+
+  (async function(){
+    try{db=window.claude?await window.claude.use('db'):null}catch(e){db=null}
+    if(!db)return;
+    db.collection('slots').onSnapshot(function(s){taken=new Set(s.docs.map(function(d){return d.id}));render()},function(){});
+    try{var u=await window.claude.use('user');owner=u?await u.isOwner():false}catch(e){owner=false}
+    if(owner){$('adminSec').hidden=false;
+      db.collection('bookings').orderBy('created','desc').limit(100).onSnapshot(function(s){renderAdmin(s.docs.map(function(d){return d.data()}))},function(){});}
+  })();
+})();
+</script>
